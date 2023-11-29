@@ -53,7 +53,7 @@ public class HelloController {
             lastY = e.getY();
 
             if (e.isControlDown()) {
-                DRAWER.changeTranslationMatrix((float) xOffset / 5, (float) yOffset / 5, 0);
+                DRAWER.changeTranslationMatrix((float) xOffset / 10, (float) yOffset / 10, 0);
             } else {
                 Point2D path = new Point2D(xOffset, yOffset);
                 MatrixRotations.rotate(path);

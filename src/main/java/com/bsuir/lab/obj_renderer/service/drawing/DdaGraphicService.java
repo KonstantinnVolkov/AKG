@@ -6,6 +6,8 @@ import javafx.scene.paint.Color;
 
 public class DdaGraphicService {
 
+	public static final Color LINE_COLOR = Color.GOLD;
+
 	public static void drawLine(Point2D startPoint, Point2D endPoint, GraphicsContext graphicsContext) {
 		int roundedStartX = (int) Math.round(startPoint.getX());
 		int roundedStartY = (int) Math.round(startPoint.getY());
@@ -17,7 +19,7 @@ public class DdaGraphicService {
 
 		double length = Math.max(deltaX, deltaY);
 		if (length == 0) {
-			graphicsContext.getPixelWriter().setColor(roundedStartX + 650, roundedStartY + 350, Color.BLACK);
+			graphicsContext.getPixelWriter().setColor(roundedStartX, roundedStartY, LINE_COLOR);
 			return;
 		}
 
@@ -27,8 +29,7 @@ public class DdaGraphicService {
 		double x = startPoint.getX();
 		double y = startPoint.getY();
 		for (int i = 0; i <= length; i++) {
-			graphicsContext.getPixelWriter().setColor((int) Math.round(x), (int) Math.round(y), Color.BLACK);
-//			graphicsContext.getPixelWriter().setColor((int) Math.round(x + 650), (int) Math.round(y + 350), Color.BLACK);
+			graphicsContext.getPixelWriter().setColor((int) Math.round(x), (int) Math.round(y), LINE_COLOR);
 			x += dX;
 			y += dY;
 		}

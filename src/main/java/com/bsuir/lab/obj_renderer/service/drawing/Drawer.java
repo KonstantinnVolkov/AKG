@@ -17,14 +17,14 @@ public class Drawer {
 
     private float x = 0, y = 0, z = 0;
     private final int SCALE = 1;
-    private final int ZOOM_NUMBER = 5;
+    private final double ZOOM_NUMBER = 0.5;
     private final double Z_FAR = 1000000, Z_NEAR = 0.1;
 
-    private Vector3D eye = new Vector3D(0, 0, 100);
+    private Vector3D eye = new Vector3D(0, 0, 5);
     private Vector3D up = new Vector3D(0, 1, 0);
     private Vector3D target = new Vector3D(0, 0, 0);
     private List<Vector4D> vertexesChangeable = new ArrayList<>();
-    ;
+    private List<Vector4D> vertexesView = new ArrayList<>();
 
     private final RealMatrix TRANSLATION_MATRIX = MatrixUtils.createRealMatrix(
             new double[][]{
@@ -89,6 +89,8 @@ public class Drawer {
         }
 
         for (int i = 0; i < vertexesChangeable.size(); i++) {
+            vertexesChangeable.set(i, vertexesChangeable.get(i).apply(SCALE_MATRIX));
+
             vertexesChangeable.set(i, vertexesChangeable.get(i).apply(MatrixRotations.rotationMatrixX));
             vertexesChangeable.set(i, vertexesChangeable.get(i).apply(MatrixRotations.rotationMatrixY));
             vertexesChangeable.set(i, vertexesChangeable.get(i).apply(MatrixRotations.rotationMatrixZ));
@@ -97,7 +99,6 @@ public class Drawer {
             vertexesChangeable.set(i, vertexesChangeable.get(i).apply(viewToProjectionMatrix));
             vertexesChangeable.set(i, vertexesChangeable.get(i).divide(vertexesChangeable.get(i).getW()));
             vertexesChangeable.set(i, vertexesChangeable.get(i).apply(projectionToViewMatrix));
-//            System.out.println(vertexesChangeable.get(i));
         }
     }
 
