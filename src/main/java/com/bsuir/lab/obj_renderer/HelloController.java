@@ -7,10 +7,15 @@ import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 
 public class HelloController {
+
+    private long lastTime = System.nanoTime();
+    private int frameCount = 0;
+    private double fps = 0d;
 
     @FXML
     private Canvas canvas;
@@ -23,9 +28,16 @@ public class HelloController {
     private Double lastY = 0.0;
 
     private static final ObjectData objectData = ObjectData.getInstance();
-    private static final Drawer DRAWER = new Drawer(objectData.getVertexes(), objectData.getFaces());
+    private static final Drawer DRAWER = new Drawer(
+            objectData.getVertexes(),
+            objectData.getNormals(),
+            objectData.getFaces()
+    );
 
     private static final float ROTATION_INDEX = 0.1F;
+
+//    @FXML
+//    private Label fpsLabel;
 
     @FXML
     void mousePressed(MouseEvent event) {
@@ -59,6 +71,7 @@ public class HelloController {
                 MatrixRotations.rotate(path);
             }
             DRAWER.draw(gContext);
+            calculateFps();
         }
     }
 
@@ -71,10 +84,24 @@ public class HelloController {
             DRAWER.zoomOut();
         }
         DRAWER.draw(gContext);
+        calculateFps();
     }
 
     private void handle() {
         gContext = canvas.getGraphicsContext2D();
         gContext.clearRect(0.0, 0.0, 1280, 720);
+    }
+
+    private void calculateFps() {
+        long now = System.nanoTime();
+        double elapsedTime = (now - lastTime) / 1e9;
+        frameCount++;
+
+        if (elapsedTime >= 1d) {
+            fps = frameCount / elapsedTime;
+            frameCount = 0;
+            lastTime = now;
+//            fpsLabel.setText(String.format("FPS: %.2f", fps));
+        }
     }
 }

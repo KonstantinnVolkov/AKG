@@ -14,26 +14,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.bsuir.lab.obj_renderer.model.WindowConstants.*;
+import static com.bsuir.lab.obj_renderer.util.Vector3DMatrixApplier.applyMatrix;
 
 public class Drawer {
 
-    private final Color LIGHT_COLOR = Color.GOLD;
-
+    List<double[]> vertexes;
+    List<List<List<Integer>>> faces;
+    List<Vector3D> normals;
     private ZBuffer zBuffer;
 
     private float x = 0, y = 0, z = 0;
     private final int SCALE = 1;
-    private final double ZOOM_STEP = 0.1;
-    private final double Z_FAR = 1000000, Z_NEAR = 0.1;
+    private final double ZOOM_STEP = 0.1, Z_FAR = 1000000, Z_NEAR = 0.1;
 
     private Vector3D eye = new Vector3D(0, 0, 5);
     private Vector3D up = new Vector3D(0, 1, 0);
     private Vector3D target = new Vector3D(0, 0, 0);
-    private Vector3D lightDirection = new Vector3D(1, 0, -1);
+    private Vector3D lightDirection = new Vector3D(1, 0, -1).normalize();
+    private final Color LIGHT_COLOR = Color.GOLD;
 
     private List<Vector4D> vertexesChangeable = new ArrayList<>();
     private List<Vector4D> vertexesStart = new ArrayList<>();
     private List<Vector4D> vertexesView = new ArrayList<>();
+    private List<Vector4D> vertexesWorld = new ArrayList<>();
+    private List<Vector3D> normalsChangeable = new ArrayList<>();
 
     private final RealMatrix TRANSLATION_MATRIX = MatrixUtils.createRealMatrix(new double[][] {
             {1, 0, 0, 0},
@@ -63,11 +67,11 @@ public class Drawer {
             {0, 0, 0, 1}}
     );
 
-    List<double[]> vertexes;
-    List<List<List<Integer>>> faces;
 
-    public Drawer(List<double[]> vertexes, List<List<List<Integer>>> faces) {
+
+    public Drawer(List<double[]> vertexes, List<Vector3D> normals, List<List<List<Integer>>> faces) {
         this.vertexes = vertexes;
+        this.normals = normals;
         this.faces = faces;
         this.zBuffer = new ZBuffer();
 
@@ -94,22 +98,39 @@ public class Drawer {
     private void changeVertexes() {
         vertexesChangeable = new ArrayList<>();
         vertexesView = new ArrayList<>();
+        vertexesWorld = new ArrayList<>();
+        normalsChangeable = new ArrayList<>();
 
         for (int i = 0; i < vertexesStart.size(); i++) {
+            //model to world
             vertexesChangeable.add(vertexesStart.get(i));
-
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(SCALE_MATRIX));
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(TRANSLATION_MATRIX));
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(MatrixRotations.rotationMatrixX));
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(MatrixRotations.rotationMatrixY));
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(MatrixRotations.rotationMatrixZ));
-            vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(worldToViewMatrix));
+            vertexesWorld.add(vertexesChangeable.get(i));
 
+            //to observer
+            vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(worldToViewMatrix));
             vertexesView.add(vertexesChangeable.get(i));
 
+            //to projection
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(viewToProjectionMatrix));
             vertexesChangeable.set(i, vertexesChangeable.get(i).divideOnScalar(vertexesChangeable.get(i).getW()));
+
+            //to screen
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(projectionToViewMatrix));
+        }
+        Vector3D normal = null;
+        for (int i = 0; i < normals.size(); i++) {
+            normal = normals.get(i);
+            normal = applyMatrix(normal, TRANSLATION_MATRIX);
+            normal = applyMatrix(normal, MatrixRotations.rotationMatrixX);
+            normal = applyMatrix(normal, MatrixRotations.rotationMatrixY);
+            normal = applyMatrix(normal, MatrixRotations.rotationMatrixZ);
+            normal = applyMatrix(normal, worldToViewMatrix);
+            normalsChangeable.add(normal);
         }
     }
 
@@ -140,41 +161,18 @@ public class Drawer {
         changeVertexes();
         zBuffer.cleanZBuffer();
 
-        int x1, x2, y1, y2, z1, z2;
-        for (int j = 0; j < faces.size(); j++) {
-            List<List<Integer>> face = faces.get(j);
+        for (int i = 0; i < faces.size(); i++) {
+            List<List<Integer>> face = faces.get(i);
 
             if (!isBackFace(face)) {
-                Vector3D normal = calculateNormal(face);
-                double lightIntensity = getLightIntensity(normal);
-                Color color = calculateColor(lightIntensity);
-
-                for (int i = 0; i < face.size(); i++) {
-                    List<Integer> temp = face.get(i);
-
-                    if (temp.get(0) - 1 < 0) continue;
-
-                    x1 = (int) vertexesChangeable.get(temp.get(0) - 1).getX();
-                    y1 = (int) vertexesChangeable.get(temp.get(0) - 1).getY();
-                    z1 = (int) vertexesChangeable.get(temp.get(0) - 1).getZ();
-
-                    if (i == face.size() - 1) {
-                        x2 = (int) vertexesChangeable.get(face.get(0).get(0) - 1).getX();
-                        y2 = (int) vertexesChangeable.get(face.get(0).get(0) - 1).getY();
-                        z2 = (int) vertexesChangeable.get(face.get(0).get(0) - 1).getZ();
-                    } else {
-                        if (face.get(i + 1).get(0) - 1 < 0) continue;
-
-                        x2 = (int) vertexesChangeable.get(face.get(i + 1).get(0) - 1).getX();
-                        y2 = (int) vertexesChangeable.get(face.get(i + 1).get(0) - 1).getY();
-                        z2 = (int) vertexesChangeable.get(face.get(i + 1).get(0) - 1).getZ();
-                    }
-                    Point3D pStart = new Point3D(x1, y1, z1);
-                    Point3D pEnd = new Point3D(x2, y2, z2);
-
-                    DdaGraphicService.drawLine(pStart, pEnd, color, gContext, zBuffer);
-                }
-                DdaGraphicService.fillTriangle(gContext, face, vertexesChangeable, zBuffer, color);
+                GraphicService.fillTriangle(
+                        gContext,
+                        face,
+                        vertexesWorld,
+                        vertexesChangeable,
+                        normalsChangeable,
+                        zBuffer
+                );
             }
         }
 
@@ -197,14 +195,5 @@ public class Drawer {
 
         Vector3D v2 = vertexesView.get(face.get(2).get(0) - 1).toVector3D().subtract(vertexesView.get(face.get(0).get(0) - 1).toVector3D()).normalize();
         return Vector3D.crossProduct(v2, v1).normalize();
-    }
-
-    private double getLightIntensity(Vector3D normal) {
-        double scalar = Vector3D.dotProduct(normal.scalarMultiply(-1), lightDirection.scalarMultiply(-1));
-        return scalar - 1 > 0 ? 1 : Math.max(scalar, 0);
-    }
-
-    private Color calculateColor(double lightIntensity) {
-        return Color.rgb((int) (lightIntensity * LIGHT_COLOR.getRed() * 255), (int) (lightIntensity * LIGHT_COLOR.getGreen() * 255), (int) (lightIntensity * LIGHT_COLOR.getBlue() * 255));
     }
 }

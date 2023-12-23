@@ -3,6 +3,7 @@ package com.bsuir.lab.obj_renderer.model;
 import com.bsuir.lab.obj_renderer.service.parser.IParser;
 import com.bsuir.lab.obj_renderer.service.parser.ObjFileParserImpl;
 import lombok.*;
+import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ public class ObjectData {
 
     private List<double[]> vertexes = new ArrayList<>();
     private List<double[]> textures = new ArrayList<>();
-    private List<double[]> normals = new ArrayList<>();
+    private List<Vector3D> normals = new ArrayList<>();
     List<List<List<Integer>>> faces = new ArrayList<>();
 
 }

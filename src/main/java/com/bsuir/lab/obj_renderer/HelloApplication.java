@@ -16,7 +16,7 @@ public class HelloApplication extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("hello-view.fxml"));
 
         Scene scene = new Scene(fxmlLoader.load(), WindowConstants.WINDOW_WIDTH, WindowConstants.WINDOW_HEIGHT);
-        scene.setFill(Color.GRAY);
+        scene.setFill(Color.BLACK);
 
         stage.setTitle(".OBJ renderer");
         stage.setScene(scene);

@@ -2,6 +2,7 @@ package com.bsuir.lab.obj_renderer.service.parser;
 
 import com.bsuir.lab.obj_renderer.model.ObjectData;
 import javafx.geometry.Point3D;
+import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,7 +21,7 @@ public class ObjFileParserImpl implements IParser{
 
     List<double[]> vertexes = new ArrayList<>();
     List<double[]> textures = new ArrayList<>();
-    List<Point3D> normals = new ArrayList<>();
+    List<Vector3D> normals = new ArrayList<>();
     List<List<List<Integer>>> faces = new ArrayList<>();
 
 
@@ -74,6 +75,11 @@ public class ObjFileParserImpl implements IParser{
 
                 }
                 case VN -> {
+                    normals.add(new Vector3D(
+                            Double.parseDouble(literals[1]),
+                            Double.parseDouble(literals[2]),
+                            Double.parseDouble(literals[3])
+                    ));
 
                 }
                 case VT -> {
@@ -85,6 +91,7 @@ public class ObjFileParserImpl implements IParser{
         return ObjectData.builder()
                 .vertexes(vertexes)
                 .textures(textures)
+                .normals(normals)
                 .faces(faces)
                 .build();
     }
