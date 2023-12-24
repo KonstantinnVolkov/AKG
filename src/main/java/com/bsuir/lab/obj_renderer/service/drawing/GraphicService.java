@@ -13,12 +13,12 @@ import static com.bsuir.lab.obj_renderer.model.WindowConstants.*;
 
 public class GraphicService {
 
-    private static final Color PIXEL_BASE_COLOR = Color.ALICEBLUE;
+    private static final Color PIXEL_BASE_COLOR = Color.BLUEVIOLET;
     private static final Color LIGHT_BASE_COLOR = Color.WHITE;
 
     private static final Vector3D EYE = new Vector3D(0, 0, 5);
-    private static final Vector3D LIGHT_DIRECTION = new Vector3D(-50, 1, 0).normalize();
-    private static final Vector3D INVERSE_LIGHT_DIRECTION = new Vector3D(-50, 1, 0).normalize().scalarMultiply(-1);
+    private static final Vector3D LIGHT_DIRECTION = new Vector3D(-1, 0, 1).normalize();
+    private static final Vector3D INVERSE_LIGHT_DIRECTION = LIGHT_DIRECTION.scalarMultiply(-1);
 
     private static final float LIGHT_INTENSITY = 5000f;
     private static final float AMBIENT_LIGHT_INTENSITY = 1 / 5f;

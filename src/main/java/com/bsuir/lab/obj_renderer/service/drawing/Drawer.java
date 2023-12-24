@@ -3,7 +3,6 @@ package com.bsuir.lab.obj_renderer.service.drawing;
 import com.bsuir.lab.obj_renderer.model.Vector4D;
 import com.bsuir.lab.obj_renderer.service.drawing.rasterization.ZBuffer;
 import com.bsuir.lab.obj_renderer.util.MatrixRotations;
-import javafx.geometry.Point3D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
@@ -23,15 +22,12 @@ public class Drawer {
     List<Vector3D> normals;
     private ZBuffer zBuffer;
 
-    private float x = 0, y = 0, z = 0;
     private final int SCALE = 1;
     private final double ZOOM_STEP = 0.1, Z_FAR = 1000000, Z_NEAR = 0.1;
 
     private Vector3D eye = new Vector3D(0, 0, 5);
     private Vector3D up = new Vector3D(0, 1, 0);
     private Vector3D target = new Vector3D(0, 0, 0);
-    private Vector3D lightDirection = new Vector3D(1, 0, -1).normalize();
-    private final Color LIGHT_COLOR = Color.GOLD;
 
     private List<Vector4D> vertexesChangeable = new ArrayList<>();
     private List<Vector4D> vertexesStart = new ArrayList<>();
@@ -87,9 +83,6 @@ public class Drawer {
     }
 
     public void changeTranslationMatrix(float dx, float dy, float dz) {
-        x += dx;
-        y += dy;
-        z += dz;
         TRANSLATION_MATRIX.setEntry(0, 3, TRANSLATION_MATRIX.getEntry(0, 3) + dx);
         TRANSLATION_MATRIX.setEntry(1, 3, TRANSLATION_MATRIX.getEntry(1, 3) + dy);
         TRANSLATION_MATRIX.setEntry(2, 3, TRANSLATION_MATRIX.getEntry(2, 3) + dz);
