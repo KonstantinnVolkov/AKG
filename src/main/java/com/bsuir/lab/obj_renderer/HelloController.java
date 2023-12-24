@@ -101,7 +101,7 @@ public class HelloController {
             fps = frameCount / elapsedTime;
             frameCount = 0;
             lastTime = now;
-//            fpsLabel.setText(String.format("FPS: %.2f", fps));
+            System.out.printf("FPS: %.2f%n", fps);
         }
     }
 }

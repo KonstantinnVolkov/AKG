@@ -6,7 +6,7 @@ import static com.bsuir.lab.obj_renderer.model.WindowConstants.WINDOW_HEIGHT;
 import static com.bsuir.lab.obj_renderer.model.WindowConstants.WINDOW_WIDTH;
 
 public class ZBuffer {
-    private final Float[] zBuffer = new Float[(int) (WINDOW_WIDTH * WINDOW_HEIGHT)];
+    private final float[] zBuffer = new float[(int) (WINDOW_WIDTH * WINDOW_HEIGHT)];
 
     public void cleanZBuffer() {
         Arrays.fill(zBuffer, Float.POSITIVE_INFINITY);

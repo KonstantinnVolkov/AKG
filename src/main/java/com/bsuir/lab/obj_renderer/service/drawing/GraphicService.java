@@ -18,9 +18,10 @@ public class GraphicService {
 
     private static final Vector3D EYE = new Vector3D(0, 0, 5);
     private static final Vector3D LIGHT_DIRECTION = new Vector3D(-50, 1, 0).normalize();
+    private static final Vector3D INVERSE_LIGHT_DIRECTION = new Vector3D(-50, 1, 0).normalize().scalarMultiply(-1);
 
     private static final float LIGHT_INTENSITY = 5000f;
-    private static final float AMBIENT_LIGHT_INTENSITY = 1/5f;
+    private static final float AMBIENT_LIGHT_INTENSITY = 1 / 5f;
     private static final float DIFFUSE_LIGHT_INTENSITY = 2f;
     private static final float SPECULAR_FACTOR = 10f;
     private static final float GLOSS_FACTOR = 50f;
@@ -103,67 +104,73 @@ public class GraphicService {
         Vector3D vertexNormalB = normalsChangeable.get(face.get(1).get(0) - 1).normalize();
         Vector3D vertexNormalC = normalsChangeable.get(face.get(2).get(0) - 1).normalize();
 
-        Vector3D tmpVec3;
-        Vector4D tmpVec4;
-
         //Сортировка по Y
-        //TODO переписать swap на Records
         if (a.getY() > c.getY()) {
-            tmpVec4 = a;
-            a = c;
-            c = tmpVec4;
-            tmpVec3 = aw;
-            aw = cw;
-            cw = tmpVec3;
-            tmpVec3 = vertexNormalA;
-            vertexNormalA = vertexNormalC;
-            vertexNormalC = tmpVec3;
+            Vector4dSwap vector4dSwap = new Vector4dSwap(c, a);
+            a = vector4dSwap.first;
+            c = vector4dSwap.second;
+
+            Vector3dSwap vector3dSwap = new Vector3dSwap(cw, aw);
+            aw = vector3dSwap.first;
+            cw = vector3dSwap.second;
+
+            vector3dSwap = new Vector3dSwap(vertexNormalC, vertexNormalA);
+            vertexNormalA = vector3dSwap.first;
+            vertexNormalC = vector3dSwap.second;
         }
 
         if (a.getY() > b.getY()) {
-            tmpVec4 = a;
-            a = b;
-            b = tmpVec4;
-            tmpVec3 = aw;
-            aw = bw;
-            bw = tmpVec3;
-            tmpVec3 = vertexNormalA;
-            vertexNormalA = vertexNormalB;
-            vertexNormalB = tmpVec3;
+            Vector4dSwap vector4dSwap = new Vector4dSwap(b, a);
+            a = vector4dSwap.first;
+            b = vector4dSwap.second;
+
+            Vector3dSwap vector3dSwap = new Vector3dSwap(bw, aw);
+            aw = vector3dSwap.first;
+            bw = vector3dSwap.second;
+
+            vector3dSwap = new Vector3dSwap(vertexNormalB, vertexNormalA);
+            vertexNormalA = vector3dSwap.first;
+            vertexNormalB = vector3dSwap.second;
         }
 
         if (b.getY() > c.getY()) {
-            tmpVec4 = b;
-            b = c;
-            c = tmpVec4;
-            tmpVec3 = bw;
-            bw = cw;
-            cw = tmpVec3;
-            tmpVec3 = vertexNormalB;
-            vertexNormalB = vertexNormalC;
-            vertexNormalC = tmpVec3;
+            Vector4dSwap vector4dSwap = new Vector4dSwap(c, b);
+            b = vector4dSwap.first;
+            c = vector4dSwap.second;
+
+            Vector3dSwap vector3dSwap = new Vector3dSwap(cw, bw);
+            bw = vector3dSwap.first;
+            cw = vector3dSwap.second;
+
+            vector3dSwap = new Vector3dSwap(vertexNormalC, vertexNormalB);
+            vertexNormalB = vector3dSwap.first;
+            vertexNormalC = vector3dSwap.second;
         }
 
-        Vector4D k1 = (Vector4D.subtract(c, a)).divideOnScalar(c.getY() - a.getY());
-        Vector3D vertexNormalKoeff01 = vertexNormalC.subtract(vertexNormalA).scalarMultiply(1 / (c.getY() - a.getY()));
-        Vector3D worldKoeff01 = cw.subtract(aw).scalarMultiply(1 / (c.getY() - a.getY()));
+        Vector4D vertexInterpolationCoefficient1 = calculateVertexInterpolationCoefficient(a, c);
+        Vector3D vertexNormalKoeff01 = calculateVertexNormalsInterpolationCoefficient(vertexNormalA, vertexNormalC, a, c);
+        Vector3D worldKoeff01 = calculateVertexWorldCoordsInterpolationCoefficient(aw, cw, a, c);
 
-        Vector4D k2 = (Vector4D.subtract(b, a)).divideOnScalar(b.getY() - a.getY());
-        Vector3D vertexNormalKoeff02 = vertexNormalB.subtract(vertexNormalA).scalarMultiply(1 / (b.getY() - a.getY()));
-        Vector3D worldKoeff02 = cw.subtract(bw).scalarMultiply(1 / (b.getY() - a.getY()));
+        Vector4D vertexInterpolationCoefficient2 = calculateVertexInterpolationCoefficient(a, b);
+        Vector3D vertexNormalKoeff02 = calculateVertexNormalsInterpolationCoefficient(vertexNormalA, vertexNormalB, a, b);
+        Vector3D worldKoeff02 = calculateVertexWorldCoordsInterpolationCoefficient(aw, bw, a, b);
 
-        Vector4D k3 = (Vector4D.subtract(c, b)).divideOnScalar(c.getY() - b.getY());
-        Vector3D vertexNormalKoeff03 = vertexNormalC.subtract(vertexNormalB).scalarMultiply(1 / (c.getY() - b.getY()));
-        Vector3D worldKoeff03 = cw.subtract(bw).scalarMultiply(1 / (c.getY() - b.getY()));
+        Vector4D vertexInterpolationCoefficient3 = calculateVertexInterpolationCoefficient(b, c);
+        Vector3D vertexNormalKoeff03 = calculateVertexNormalsInterpolationCoefficient(vertexNormalB, vertexNormalC, b, c);
+        Vector3D worldKoeff03 = calculateVertexWorldCoordsInterpolationCoefficient(bw, cw, b, c);
+
 
         int top = Math.max(0, (int) Math.ceil(a.getY()));
         int bottom = Math.min((int) WINDOW_HEIGHT, (int) Math.ceil(c.getY()));
 
+        float[] ambientValues = new float[3];
+        float[] diffuseValues = new float[3];
+        float[] specularValues = new float[3];
         for (int y = top; y < bottom; y++) {
-            Vector4D l = Vector4D.add(a, Vector4D.multiplyOnScalar(k1, y - a.getY()));
+            Vector4D l = Vector4D.add(a, Vector4D.multiplyOnScalar(vertexInterpolationCoefficient1, y - a.getY()));
             Vector4D r = (y < b.getY())
-                    ? Vector4D.add(a, Vector4D.multiplyOnScalar(k2, y - a.getY()))
-                    : Vector4D.add(b,Vector4D.multiplyOnScalar(k3, y - b.getY()));
+                    ? Vector4D.add(a, Vector4D.multiplyOnScalar(vertexInterpolationCoefficient2, y - a.getY()))
+                    : Vector4D.add(b, Vector4D.multiplyOnScalar(vertexInterpolationCoefficient3, y - b.getY()));
 
             Vector3D worldL = aw.add(worldKoeff01.scalarMultiply(y - a.getY()));
             Vector3D worldR = (y < b.getY())
@@ -217,9 +224,9 @@ public class GraphicService {
                                     normalKoeff.scalarMultiply(x - l.getX())
                             ).normalize();
 
-                    float[] ambientValues = ambientLightning();
-                    float[] diffuseValues = diffuseLightning(normal);
-                    float[] specularValues = specularLightning(EYE.subtract(pWorld).normalize(), normal);
+                    ambientLightning(ambientValues);
+                    diffuseLightning(diffuseValues, normal);
+                    specularLightning(EYE.subtract(pWorld).normalize(), normal, specularValues);
 
                     zBuffer.setPoint(index, p.getZ());
 
@@ -244,45 +251,52 @@ public class GraphicService {
         }
     }
 
+    private static Vector4D calculateVertexInterpolationCoefficient(Vector4D a, Vector4D b) {
+        return Vector4D.subtract(b, a).divideOnScalar(b.getY() - a.getY());
+    }
+
+    private static Vector3D calculateVertexNormalsInterpolationCoefficient(
+            Vector3D normalA, Vector3D normalB,
+            Vector4D a, Vector4D b
+    ) {
+        return normalB.subtract(normalA).scalarMultiply(1 / (b.getY() - a.getY()));
+    }
+
+    private static Vector3D calculateVertexWorldCoordsInterpolationCoefficient(
+            Vector3D worldA, Vector3D worldB,
+            Vector4D a, Vector4D b
+    ) {
+        return worldB.subtract(worldA).scalarMultiply(1 / (b.getY() - a.getY()));
+    }
+
     private static double getLightIntensity(Vector3D normal) {
-        double scalar = Vector3D.dotProduct(normal.scalarMultiply(-1), LIGHT_DIRECTION.scalarMultiply(-1));
+        double scalar = Vector3D.dotProduct(normal.scalarMultiply(-1), INVERSE_LIGHT_DIRECTION);
         return scalar - 1 > 0 ? 1 : Math.max(scalar, 0);
     }
 
-    private static float[] ambientLightning() {
-        float[] values = new float[3];
-
-        values[0] = (float) (LIGHT_BASE_COLOR.getRed() * AMBIENT_LIGHT_INTENSITY);
-        values[1] = (float) (LIGHT_BASE_COLOR.getGreen() * AMBIENT_LIGHT_INTENSITY);
-        values[2] = (float) (LIGHT_BASE_COLOR.getBlue() * AMBIENT_LIGHT_INTENSITY);
-
-        return values;
+    private static void ambientLightning(float[] ambientValues) {
+        ambientValues[0] = (float) (LIGHT_BASE_COLOR.getRed() * AMBIENT_LIGHT_INTENSITY);
+        ambientValues[1] = (float) (LIGHT_BASE_COLOR.getGreen() * AMBIENT_LIGHT_INTENSITY);
+        ambientValues[2] = (float) (LIGHT_BASE_COLOR.getBlue() * AMBIENT_LIGHT_INTENSITY);
     }
 
-    private static float[] diffuseLightning(Vector3D normal) {
-        float[] values = new float[3];
-
+    private static void diffuseLightning(float[] diffuseValues, Vector3D normal) {
         float scalar = (float) Math.max(getLightIntensity(normal), 0) * DIFFUSE_LIGHT_INTENSITY;
-        values[0] = (float)(LIGHT_BASE_COLOR.getRed() * scalar);
-        values[1] = (float)(LIGHT_BASE_COLOR.getGreen() * scalar);
-        values[2] = (float)(LIGHT_BASE_COLOR.getBlue() * scalar);
 
-        return values;
+        diffuseValues[0] = (float) (LIGHT_BASE_COLOR.getRed() * scalar);
+        diffuseValues[1] = (float) (LIGHT_BASE_COLOR.getGreen() * scalar);
+        diffuseValues[2] = (float) (LIGHT_BASE_COLOR.getBlue() * scalar);
     }
 
-    private static float[] specularLightning(Vector3D view, Vector3D normal) {
-        Vector3D minusLightDirection = LIGHT_DIRECTION.scalarMultiply(-1);
-        Vector3D reflection = reflect(minusLightDirection, normal).normalize();
+    private static void specularLightning(Vector3D view, Vector3D normal, float[] specularValues) {
+        Vector3D reflection = reflect(LIGHT_DIRECTION.scalarMultiply(-1), normal).normalize();
 
         float RV = (float) Math.max(reflection.dotProduct(view), 0);
-        float[] values = new float[3];
-        float temp = (float) Math.pow(RV, GLOSS_FACTOR);
+        float temp = (float) Math.pow(RV, GLOSS_FACTOR) * SPECULAR_FACTOR;
 
-        values[0] = (SPECULAR_FACTOR * temp);
-        values[1] = (SPECULAR_FACTOR * temp);
-        values[2] = (SPECULAR_FACTOR * temp);
-
-        return values;
+        specularValues[0] = temp;
+        specularValues[1] = temp;
+        specularValues[2] = temp;
     }
 
     private static Vector3D reflect(Vector3D vector, Vector3D normal) {

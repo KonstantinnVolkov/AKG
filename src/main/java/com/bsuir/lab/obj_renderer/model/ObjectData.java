@@ -23,7 +23,7 @@ public class ObjectData {
 
         static {
             try {
-                instance = OBJ_FILE_PARSER.parseFile("src/main/resources/com/bsuir/lab/obj_renderer/obj/diablo3_pose.obj");
+                instance = OBJ_FILE_PARSER.parseFile("src/main/resources/com/bsuir/lab/obj_renderer/obj/diablo/model.obj");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
