@@ -41,7 +41,6 @@ public class ObjectData {
                 throw new RuntimeException(e);
             }
         }
-
     }
 
     public static ObjectData getInstance() {

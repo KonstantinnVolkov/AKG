@@ -4,7 +4,6 @@ import com.bsuir.lab.obj_renderer.model.Vector4D;
 import com.bsuir.lab.obj_renderer.service.drawing.rasterization.ZBuffer;
 import com.bsuir.lab.obj_renderer.util.MatrixRotations;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.commons.math3.linear.MatrixUtils;
