@@ -6,5 +6,10 @@ import java.io.IOException;
 
 public interface IParser {
 
-    ObjectData parseFile(String path) throws IOException;
+    ObjectData parseFile(
+            String objPath,
+            String diffusePath,
+            String normalPath,
+            String specularPath
+    ) throws IOException;
 }

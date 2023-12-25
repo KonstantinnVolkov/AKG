@@ -13,5 +13,4 @@ public class Vector3DMatrixApplier {
                 matrix.getEntry(2,0)*vector.getX() + matrix.getEntry(2,1)*vector.getY() + matrix.getEntry(2,2)*vector.getZ()
         );
     }
-
 }

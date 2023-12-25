@@ -10,6 +10,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
+import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 
 public class HelloController {
 
@@ -31,13 +32,9 @@ public class HelloController {
     private static final Drawer DRAWER = new Drawer(
             objectData.getVertexes(),
             objectData.getNormals(),
-            objectData.getFaces()
+            objectData.getFaces(),
+            objectData.getTextures()
     );
-
-    private static final float ROTATION_INDEX = 0.1F;
-
-//    @FXML
-//    private Label fpsLabel;
 
     @FXML
     void mousePressed(MouseEvent event) {

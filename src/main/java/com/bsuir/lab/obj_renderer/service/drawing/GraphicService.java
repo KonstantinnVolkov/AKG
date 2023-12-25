@@ -1,11 +1,15 @@
 package com.bsuir.lab.obj_renderer.service.drawing;
 
+import com.bsuir.lab.obj_renderer.model.ObjectData;
 import com.bsuir.lab.obj_renderer.model.Vector4D;
 import com.bsuir.lab.obj_renderer.service.drawing.rasterization.ZBuffer;
+import com.bsuir.lab.obj_renderer.util.MatrixRotations;
+import com.bsuir.lab.obj_renderer.util.Vector3DMatrixApplier;
 import javafx.geometry.Point3D;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
+import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 
 import java.util.List;
 
@@ -13,23 +17,26 @@ import static com.bsuir.lab.obj_renderer.model.WindowConstants.*;
 
 public class GraphicService {
 
-    private static final Color PIXEL_BASE_COLOR = Color.BLUEVIOLET;
-    private static final Color LIGHT_BASE_COLOR = Color.WHITE;
-
+    private static final Vector3D VECTOR_3D_ONE = new Vector3D(1d, 1d, 1d);
     private static final Vector3D EYE = new Vector3D(0, 0, 5);
-    private static final Vector3D LIGHT_DIRECTION = new Vector3D(-1, 0, 1).normalize();
+    private static final Vector3D LIGHT_DIRECTION = new Vector3D(-1, 0, 0).normalize();
     private static final Vector3D INVERSE_LIGHT_DIRECTION = LIGHT_DIRECTION.scalarMultiply(-1);
 
-    private static final float LIGHT_INTENSITY = 5000f;
-    private static final float AMBIENT_LIGHT_INTENSITY = 1 / 5f;
+    private static final float LIGHT_INTENSITY = 1f;
+    private static final float AMBIENT_LIGHT_INTENSITY = 1f;
     private static final float DIFFUSE_LIGHT_INTENSITY = 2f;
+    private static final float SPECULAR_LIGHT_INTENSITY = 5f;
     private static final float SPECULAR_FACTOR = 10f;
-    private static final float GLOSS_FACTOR = 50f;
+    private static final float GLOSS_FACTOR = 16f;
+
 
     record Vector3dSwap(Vector3D first, Vector3D second) {
     }
 
     record Vector4dSwap(Vector4D first, Vector4D second) {
+    }
+
+    record Vector2dSwap(Vector2D first, Vector2D second) {
     }
 
     public static void drawLineDDA(
@@ -89,20 +96,28 @@ public class GraphicService {
             List<Vector4D> vertexesWorld,
             List<Vector4D> vertexesChangeable,
             List<Vector3D> normalsChangeable,
+            List<Vector2D> textures,
             ZBuffer zBuffer
     ) {
 
+        //Polygon vertexes
         Vector4D a = vertexesChangeable.get(face.get(0).get(0) - 1);
         Vector4D b = vertexesChangeable.get(face.get(1).get(0) - 1);
         Vector4D c = vertexesChangeable.get(face.get(2).get(0) - 1);
 
+        //Polygon world vertexes
         Vector3D aw = vertexesWorld.get(face.get(0).get(0) - 1).toVector3D();
         Vector3D bw = vertexesWorld.get(face.get(1).get(0) - 1).toVector3D();
         Vector3D cw = vertexesWorld.get(face.get(2).get(0) - 1).toVector3D();
 
-        Vector3D vertexNormalA = normalsChangeable.get(face.get(0).get(0) - 1).normalize();
-        Vector3D vertexNormalB = normalsChangeable.get(face.get(1).get(0) - 1).normalize();
-        Vector3D vertexNormalC = normalsChangeable.get(face.get(2).get(0) - 1).normalize();
+        //Polygon vertexes normals
+        Vector3D vertexNormalA = normalsChangeable.get(face.get(0).get(2) - 1).normalize();
+        Vector3D vertexNormalB = normalsChangeable.get(face.get(1).get(2) - 1).normalize();
+        Vector3D vertexNormalC = normalsChangeable.get(face.get(2).get(2) - 1).normalize();
+
+        Vector2D textureA = textures.get(face.get(0).get(1) - 1).scalarMultiply(a.getW());
+        Vector2D textureB = textures.get(face.get(1).get(1) - 1).scalarMultiply(b.getW());
+        Vector2D textureC = textures.get(face.get(2).get(1) - 1).scalarMultiply(c.getW());
 
         //Сортировка по Y
         if (a.getY() > c.getY()) {
@@ -117,6 +132,10 @@ public class GraphicService {
             vector3dSwap = new Vector3dSwap(vertexNormalC, vertexNormalA);
             vertexNormalA = vector3dSwap.first;
             vertexNormalC = vector3dSwap.second;
+
+            Vector2dSwap vector2dSwap = new Vector2dSwap(textureC, textureA);
+            textureA = vector2dSwap.first;
+            textureC = vector2dSwap.second;
         }
 
         if (a.getY() > b.getY()) {
@@ -131,6 +150,10 @@ public class GraphicService {
             vector3dSwap = new Vector3dSwap(vertexNormalB, vertexNormalA);
             vertexNormalA = vector3dSwap.first;
             vertexNormalB = vector3dSwap.second;
+
+            Vector2dSwap vector2dSwap = new Vector2dSwap(textureB, textureA);
+            textureA = vector2dSwap.first;
+            textureB = vector2dSwap.second;
         }
 
         if (b.getY() > c.getY()) {
@@ -145,19 +168,27 @@ public class GraphicService {
             vector3dSwap = new Vector3dSwap(vertexNormalC, vertexNormalB);
             vertexNormalB = vector3dSwap.first;
             vertexNormalC = vector3dSwap.second;
+
+            Vector2dSwap vector2dSwap = new Vector2dSwap(textureC, textureB);
+            textureB = vector2dSwap.first;
+            textureC = vector2dSwap.second;
         }
 
         Vector4D vertexInterpolationCoefficient1 = calculateVertexInterpolationCoefficient(a, c);
         Vector3D vertexNormalKoeff01 = calculateVertexNormalsInterpolationCoefficient(vertexNormalA, vertexNormalC, a, c);
         Vector3D worldKoeff01 = calculateVertexWorldCoordsInterpolationCoefficient(aw, cw, a, c);
+        Vector2D textureKoeff01 = textureC.subtract(textureA).scalarMultiply(1 / (c.getY() - a.getY()));
+
 
         Vector4D vertexInterpolationCoefficient2 = calculateVertexInterpolationCoefficient(a, b);
         Vector3D vertexNormalKoeff02 = calculateVertexNormalsInterpolationCoefficient(vertexNormalA, vertexNormalB, a, b);
         Vector3D worldKoeff02 = calculateVertexWorldCoordsInterpolationCoefficient(aw, bw, a, b);
+        Vector2D textureKoeff02 = textureB.subtract(textureA).scalarMultiply(1 / (b.getY() - a.getY()));
 
         Vector4D vertexInterpolationCoefficient3 = calculateVertexInterpolationCoefficient(b, c);
         Vector3D vertexNormalKoeff03 = calculateVertexNormalsInterpolationCoefficient(vertexNormalB, vertexNormalC, b, c);
         Vector3D worldKoeff03 = calculateVertexWorldCoordsInterpolationCoefficient(bw, cw, b, c);
+        Vector2D textureKoeff03 = textureC.subtract(textureB).scalarMultiply(1 / (c.getY() - b.getY()));
 
 
         int top = Math.max(0, (int) Math.ceil(a.getY()));
@@ -184,6 +215,13 @@ public class GraphicService {
                     ? vertexNormalA.add(vertexNormalKoeff02.scalarMultiply(y - a.getY()))
                     : vertexNormalB.add(vertexNormalKoeff03.scalarMultiply(y - b.getY()));
 
+            Vector2D textureL = textureA.add(
+                    textureKoeff01.scalarMultiply(y - a.getY())
+            );
+            Vector2D textureR = (y < b.getY())
+                    ? textureA.add(textureKoeff02.scalarMultiply(y - a.getY()))
+                    : textureB.add(textureKoeff03.scalarMultiply(y - b.getY()));
+
 
             if (l.getX() > r.getX()) {
                 Vector4dSwap vector4dSwap = new Vector4dSwap(r, l);
@@ -197,12 +235,15 @@ public class GraphicService {
                 vector3dSwap = new Vector3dSwap(worldR, worldL);
                 worldL = vector3dSwap.first;
                 worldR = vector3dSwap.second;
+
+                Vector2dSwap vector2dSwap = new Vector2dSwap(textureR, textureL);
+                textureL = vector2dSwap.first;
+                textureR = vector2dSwap.second;
             }
 
-            Vector4D k = Vector4D.subtract(r, l)
-                    .divideOnScalar(r.getX() - l.getX());
-            Vector3D normalKoeff = normalR.subtract(normalL).scalarMultiply(1 / (r.getX() - l.getX()));
+            Vector4D k = Vector4D.subtract(r, l).divideOnScalar(r.getX() - l.getX());
             Vector3D worldKoeff = worldR.subtract(worldL).scalarMultiply(1 / (r.getX() - l.getX()));
+            Vector2D textureKoeff = textureR.subtract(textureL).scalarMultiply(1 / (r.getX() - l.getX()));
 
             int left = Math.max(0, (int) Math.ceil(l.getX()));
             int right = Math.min((int) WINDOW_WIDTH, (int) Math.ceil(r.getX()));
@@ -219,28 +260,62 @@ public class GraphicService {
                 int index = (int) (y * WINDOW_WIDTH + x);
 
                 if (p.getZ() < zBuffer.get(index)) {
-                    Vector3D normal = normalL
-                            .add(
-                                    normalKoeff.scalarMultiply(x - l.getX())
-                            ).normalize();
+                    Vector2D texture = textureL.add(
+                            textureKoeff.scalarMultiply(x - l.getX())
+                    ).scalarMultiply(1 / p.getW());
 
-                    ambientLightning(ambientValues);
-                    diffuseLightning(diffuseValues, normal);
-                    specularLightning(EYE.subtract(pWorld).normalize(), normal, specularValues);
+                    Color pixelColor = null;
+                    ObjectData objectData = ObjectData.getInstance();
+
+                    //Цвет объекта
+                    Vector3D color = null;
+                    if (ObjectData.getInstance().getDiffuseTexture().getImage() != null) {
+                        pixelColor = objectData.getDiffuseTexture().getPixelColor(
+                                (int) (texture.getX() * (objectData.getDiffuseTexture().getWidth() - 1)),
+                                (int) ((1 - texture.getY()) * (objectData.getDiffuseTexture().getHeight() - 1))
+                        );
+                        color = new Vector3D(pixelColor.getRed(), pixelColor.getGreen(), pixelColor.getBlue());
+                    }
+
+                    //Цвет отражения
+                    Vector3D specularColor = null;
+                    if (ObjectData.getInstance().getSpecularTexture().getImage() != null) {
+                        pixelColor = objectData.getSpecularTexture().getPixelColor(
+                                (int) (texture.getX() * (objectData.getSpecularTexture().getWidth() - 1)),
+                                (int) ((1 - texture.getY()) * (objectData.getSpecularTexture().getHeight() - 1))
+                        );
+                        specularColor = new Vector3D(pixelColor.getRed(), pixelColor.getGreen(), pixelColor.getBlue());
+                    }
+
+                    //Нормали
+                    Vector3D normal;
+                    pixelColor = objectData.getNormalTexture().getPixelColor(
+                            (int) (texture.getX() * (objectData.getNormalTexture().getWidth() - 1)),
+                            (int) ((1 - texture.getY()) * (objectData.getNormalTexture().getHeight() - 1))
+                    );
+                    normal = new Vector3D(pixelColor.getRed(), pixelColor.getGreen(), pixelColor.getBlue());
+                    normal = normal.scalarMultiply(2).subtract(VECTOR_3D_ONE).normalize();
+                    normal = Vector3DMatrixApplier.applyMatrix(normal, MatrixRotations.rotationMatrixX);
+                    normal = Vector3DMatrixApplier.applyMatrix(normal, MatrixRotations.rotationMatrixY);
+                    normal = Vector3DMatrixApplier.applyMatrix(normal, MatrixRotations.rotationMatrixZ);
+
+                    ambientLightning(color, ambientValues);
+                    diffuseLightning(color, diffuseValues, normal);
+                    specularLightning(specularColor, EYE.subtract(pWorld).normalize(), normal, specularValues);
 
                     zBuffer.setPoint(index, p.getZ());
 
                     int colorR = (int) (Math.min(
-                            PIXEL_BASE_COLOR.getRed() * (ambientValues[0] + diffuseValues[0] + specularValues[0]) * 255,
+                            (ambientValues[0] + diffuseValues[0] + specularValues[0]) * 255,
                             255
                     ));
 
                     int colorG = (int) (Math.min(
-                            PIXEL_BASE_COLOR.getGreen() * (ambientValues[1] + diffuseValues[1] + specularValues[1]) * 255,
+                            (ambientValues[1] + diffuseValues[1] + specularValues[1]) * 255,
                             255
                     ));
                     int colorB = (int) (Math.min(
-                            PIXEL_BASE_COLOR.getBlue() * (ambientValues[2] + diffuseValues[2] + specularValues[2]) * 255,
+                            (ambientValues[2] + diffuseValues[2] + specularValues[2]) * 255,
                             255
                     ));
 
@@ -274,29 +349,30 @@ public class GraphicService {
         return scalar - 1 > 0 ? 1 : Math.max(scalar, 0);
     }
 
-    private static void ambientLightning(float[] ambientValues) {
-        ambientValues[0] = (float) (LIGHT_BASE_COLOR.getRed() * AMBIENT_LIGHT_INTENSITY);
-        ambientValues[1] = (float) (LIGHT_BASE_COLOR.getGreen() * AMBIENT_LIGHT_INTENSITY);
-        ambientValues[2] = (float) (LIGHT_BASE_COLOR.getBlue() * AMBIENT_LIGHT_INTENSITY);
+    private static void ambientLightning(Vector3D color, float[] ambientValues) {
+        ambientValues[0] = (float) (color.getX() * AMBIENT_LIGHT_INTENSITY);
+        ambientValues[1] = (float) (color.getY() * AMBIENT_LIGHT_INTENSITY);
+        ambientValues[2] = (float) (color.getZ() * AMBIENT_LIGHT_INTENSITY);
     }
 
-    private static void diffuseLightning(float[] diffuseValues, Vector3D normal) {
+    private static void diffuseLightning(Vector3D color, float[] diffuseValues, Vector3D normal) {
         float scalar = (float) Math.max(getLightIntensity(normal), 0) * DIFFUSE_LIGHT_INTENSITY;
 
-        diffuseValues[0] = (float) (LIGHT_BASE_COLOR.getRed() * scalar);
-        diffuseValues[1] = (float) (LIGHT_BASE_COLOR.getGreen() * scalar);
-        diffuseValues[2] = (float) (LIGHT_BASE_COLOR.getBlue() * scalar);
+        diffuseValues[0] = (float) (color.getX() * scalar);
+        diffuseValues[1] = (float) (color.getY() * scalar);
+        diffuseValues[2] = (float) (color.getZ() * scalar);
     }
 
-    private static void specularLightning(Vector3D view, Vector3D normal, float[] specularValues) {
-        Vector3D reflection = reflect(LIGHT_DIRECTION.scalarMultiply(-1), normal).normalize();
+    private static void specularLightning(Vector3D color, Vector3D view, Vector3D normal, float[] specularValues) {
+        Vector3D reflection = reflect(INVERSE_LIGHT_DIRECTION, normal).normalize();
 
         float RV = (float) Math.max(reflection.dotProduct(view), 0);
-        float temp = (float) Math.pow(RV, GLOSS_FACTOR) * SPECULAR_FACTOR;
+        float temp = (float) Math.pow(RV, GLOSS_FACTOR);
+//                * SPECULAR_FACTOR;
 
-        specularValues[0] = temp;
-        specularValues[1] = temp;
-        specularValues[2] = temp;
+        specularValues[0] = (float) (temp * SPECULAR_LIGHT_INTENSITY * color.getX());
+        specularValues[1] = (float) (temp * SPECULAR_LIGHT_INTENSITY * color.getY());
+        specularValues[2] = (float) (temp * SPECULAR_LIGHT_INTENSITY * color.getZ());
     }
 
     private static Vector3D reflect(Vector3D vector, Vector3D normal) {

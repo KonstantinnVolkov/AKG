@@ -8,24 +8,7 @@ public class MatrixRotations {
 
     private static final double DELTA_ANGLE = 0.01;
     static double angleY, angleX, angleZ;
-    public static RealMatrix rotationMatrixX = MatrixUtils.createRealMatrix( new double[][] {
-            {1, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 0, 1, 0},
-            {0, 0, 0, 1}
-            }
-
-    );
-
-    public static RealMatrix rotationMatrixY = MatrixUtils.createRealMatrix( new double[][] {
-                    {1, 0, 0, 0},
-                    {0, 1, 0, 0},
-                    {0, 0, 1, 0},
-                    {0, 0, 0, 1}
-            }
-
-    );
-    public static RealMatrix rotationMatrixZ = MatrixUtils.createRealMatrix( new double[][] {
+    public static RealMatrix rotationMatrixX = MatrixUtils.createRealMatrix(new double[][]{
                     {1, 0, 0, 0},
                     {0, 1, 0, 0},
                     {0, 0, 1, 0},
@@ -34,12 +17,29 @@ public class MatrixRotations {
 
     );
 
-    public static void rotate (Point2D path) {
+    public static RealMatrix rotationMatrixY = MatrixUtils.createRealMatrix(new double[][]{
+                    {1, 0, 0, 0},
+                    {0, 1, 0, 0},
+                    {0, 0, 1, 0},
+                    {0, 0, 0, 1}
+            }
+
+    );
+    public static RealMatrix rotationMatrixZ = MatrixUtils.createRealMatrix(new double[][]{
+                    {1, 0, 0, 0},
+                    {0, 1, 0, 0},
+                    {0, 0, 1, 0},
+                    {0, 0, 0, 1}
+            }
+
+    );
+
+    public static void rotate(Point2D path) {
         angleX += path.getY() * DELTA_ANGLE;
         angleY += path.getX() * DELTA_ANGLE;
 
         rotationMatrixX.setEntry(1, 1, Math.cos(angleX));
-        rotationMatrixX.setEntry(1, 2,-Math.sin(angleX));
+        rotationMatrixX.setEntry(1, 2, -Math.sin(angleX));
         rotationMatrixX.setEntry(2, 1, Math.sin(angleX));
         rotationMatrixX.setEntry(2, 2, Math.cos(angleX));
 
@@ -47,26 +47,5 @@ public class MatrixRotations {
         rotationMatrixY.setEntry(0, 2, Math.sin(angleY));
         rotationMatrixY.setEntry(2, 0, -Math.sin(angleY));
         rotationMatrixY.setEntry(2, 2, Math.cos(angleY));
-    }
-
-    public static void rotate (double deltaX, double deltaY, double deltaZ) {
-        angleX += deltaX;
-        angleY += deltaY;
-        angleZ += deltaZ;
-
-        rotationMatrixX.setEntry(1, 1, Math.cos(angleX));
-        rotationMatrixX.setEntry(1, 2,-Math.sin(angleX));
-        rotationMatrixX.setEntry(2, 1, Math.sin(angleX));
-        rotationMatrixX.setEntry(2, 2, Math.cos(angleX));
-
-        rotationMatrixY.setEntry(0, 0, Math.cos(angleY));
-        rotationMatrixY.setEntry(0, 2, Math.sin(angleY));
-        rotationMatrixY.setEntry(2, 0,-Math.sin(angleY));
-        rotationMatrixY.setEntry(2, 2, Math.cos(angleY));
-
-        rotationMatrixY.setEntry(0, 0, Math.cos(angleZ));
-        rotationMatrixY.setEntry(0, 1, -Math.sin(angleZ));
-        rotationMatrixY.setEntry(1, 0, Math.sin(angleZ));
-        rotationMatrixY.setEntry(1, 1, Math.cos(angleZ));
     }
 }

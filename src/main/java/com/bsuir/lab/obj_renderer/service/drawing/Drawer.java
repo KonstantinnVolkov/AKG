@@ -6,6 +6,7 @@ import com.bsuir.lab.obj_renderer.util.MatrixRotations;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
+import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 
@@ -34,6 +35,7 @@ public class Drawer {
     private List<Vector4D> vertexesView = new ArrayList<>();
     private List<Vector4D> vertexesWorld = new ArrayList<>();
     private List<Vector3D> normalsChangeable = new ArrayList<>();
+    private List<Vector2D> textures = new ArrayList<>();
 
     private final RealMatrix TRANSLATION_MATRIX = MatrixUtils.createRealMatrix(new double[][] {
             {1, 0, 0, 0},
@@ -65,10 +67,11 @@ public class Drawer {
 
 
 
-    public Drawer(List<double[]> vertexes, List<Vector3D> normals, List<List<List<Integer>>> faces) {
+    public Drawer(List<double[]> vertexes, List<Vector3D> normals, List<List<List<Integer>>> faces, List<Vector2D> textures) {
         this.vertexes = vertexes;
         this.normals = normals;
         this.faces = faces;
+        this.textures = textures;
         this.zBuffer = new ZBuffer();
 
         Vector4D temp;
@@ -98,10 +101,10 @@ public class Drawer {
             //model to world
             vertexesChangeable.add(vertexesStart.get(i));
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(SCALE_MATRIX));
-            vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(TRANSLATION_MATRIX));
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(MatrixRotations.rotationMatrixX));
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(MatrixRotations.rotationMatrixY));
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(MatrixRotations.rotationMatrixZ));
+            vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(TRANSLATION_MATRIX));
             vertexesWorld.add(vertexesChangeable.get(i));
 
             //to observer
@@ -115,7 +118,8 @@ public class Drawer {
             //to screen
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(projectionToViewMatrix));
         }
-        Vector3D normal = null;
+
+        Vector3D normal;
         for (int i = 0; i < normals.size(); i++) {
             normal = normals.get(i);
             normal = applyMatrix(normal, TRANSLATION_MATRIX);
@@ -164,6 +168,7 @@ public class Drawer {
                         vertexesWorld,
                         vertexesChangeable,
                         normalsChangeable,
+                        textures,
                         zBuffer
                 );
             }
