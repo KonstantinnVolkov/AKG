@@ -19,7 +19,7 @@ public class ObjectData {
 
     private static final class InstanceHolder {
 
-        private static final String MODEL_FOLDER = "/diablo";
+        private static final String MODEL_FOLDER = "/head";
 
         private static final String OBJ_PATH = "src/main/resources/obj"+MODEL_FOLDER+"/model.obj";
         private static final String DIFFUSE_TEXTURE_PATH = "/obj"+MODEL_FOLDER+"/diffuse.png";

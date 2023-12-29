@@ -104,7 +104,15 @@ public class Drawer {
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(MatrixRotations.rotationMatrixY));
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(MatrixRotations.rotationMatrixZ));
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(TRANSLATION_MATRIX));
+            float w = 1 / vertexesChangeable.get(i).getW();
+
             vertexesWorld.add(vertexesChangeable.get(i));
+            vertexesWorld.set(i, new Vector4D(
+                    vertexesChangeable.get(i).getX(),
+                    vertexesChangeable.get(i).getX(),
+                    vertexesChangeable.get(i).getX(),
+                    w
+            ));
 
             //to observer
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(worldToViewMatrix));
@@ -112,10 +120,17 @@ public class Drawer {
 
             //to projection
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(viewToProjectionMatrix));
+            w = 1 / vertexesChangeable.get(i).getW();
             vertexesChangeable.set(i, vertexesChangeable.get(i).divideOnScalar(vertexesChangeable.get(i).getW()));
 
             //to screen
             vertexesChangeable.set(i, vertexesChangeable.get(i).applyMatrix(projectionToViewMatrix));
+//            vertexesChangeable.set(i, new Vector4D(
+//                    vertexesChangeable.get(i).getX(),
+//                    vertexesChangeable.get(i).getX(),
+//                    vertexesChangeable.get(i).getX(),
+//                    1/w
+//            ));
         }
 
         Vector3D normal;

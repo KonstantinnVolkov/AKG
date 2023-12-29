@@ -26,7 +26,7 @@ public class GraphicService {
     private static final float LIGHT_INTENSITY = 1f;
     private static final float AMBIENT_LIGHT_INTENSITY = 1f;
     private static final float DIFFUSE_LIGHT_INTENSITY = 2f;
-    private static final float SPECULAR_LIGHT_INTENSITY = 5f;
+    private static final float SPECULAR_LIGHT_INTENSITY = 1f;
     private static final float SPECULAR_FACTOR = 10f;
     private static final float GLOSS_FACTOR = 16f;
 
@@ -174,6 +174,9 @@ public class GraphicService {
         textureA = textures.get(face.get(0).get(1) - 1).scalarMultiply(a.getW());
         textureB = textures.get(face.get(1).get(1) - 1).scalarMultiply(b.getW());
         textureC = textures.get(face.get(2).get(1) - 1).scalarMultiply(c.getW());
+        textureA = textureA.scalarMultiply(a.getW());
+        textureB = textureB.scalarMultiply(b.getW());
+        textureC = textureC.scalarMultiply(c.getW());
 
         sortVerticesByY();
 

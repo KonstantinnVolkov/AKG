@@ -19,4 +19,8 @@ public class ZBuffer {
     public float get(int index) {
         return zBuffer[index];
     }
+
+    public float[] getzBuffer() {
+        return zBuffer;
+    }
 }
